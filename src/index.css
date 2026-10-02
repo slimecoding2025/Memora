@@ -4,15 +4,15 @@
 
 :root, [data-theme='dark'] {
   --bg: #0e0f12; --surface: #15171b; --raised: #1c1f24; --line: #262a31;
-  --ink: #eceae4; --muted: #8e939c; --accent: #e4a957;
+  --ink: #eceae4; --muted: #8e939c; --accent: #e4a957; --danger: #f87171;
 }
 [data-theme='light'] {
   --bg: #faf9f6; --surface: #ffffff; --raised: #f3f1ec; --line: #e5e2da;
-  --ink: #16171a; --muted: #6b6e75; --accent: #b9771f;
+  --ink: #16171a; --muted: #6b6e75; --accent: #8f5a12; --danger: #b91c1c;
 }
 body { background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 .field { @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-sm placeholder:text-muted; }
-.btn { @apply rounded-md border border-line bg-raised px-3 py-2 text-sm font-medium transition-colors hover:border-accent; }
+.btn { @apply min-h-10 rounded-md border border-line bg-raised px-3 py-2 text-sm font-medium transition-colors hover:border-accent; }
 .btn-primary { @apply rounded-md bg-accent px-3 py-2 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50; }

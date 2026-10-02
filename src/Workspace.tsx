@@ -4,10 +4,14 @@ import { Archive, Paperclip, Pencil, LogOut, Moon, Sparkles, Star, Sun, Trash2 }
 import { NewMemory, parseTags } from './lib/validation'
 import { flush, submit } from './lib/offline'
 import Markdown from './Markdown'
+import Editor from './Editor'
+import Voice from './Voice'
+import { indexMemories } from './lib/ai'
+import { notify } from './lib/notify'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import type { Memory, MemoryType } from './types'
-import Files from './Files'
+import Files, { ALLOWED, MAX, send } from './Files'
 
 type Opt = { id: string; name: string }
 
@@ -62,8 +66,20 @@ export default function Workspace({ session }: { session: Session }) {
   }, [])
   useEffect(() => { void loadMeta() }, [loadMeta])
 
+  useEffect(() => { // Smart rediscovery: once a day, resurface an older memory
+    const today = new Date().toDateString()
+    if (localStorage.getItem('memora:rediscover') === today) return
+    supabase.from('memories').select('title').eq('is_archived', false)
+      .lt('created_at', new Date(Date.now() - 7 * 86_400_000).toISOString()).limit(30)
+      .then(({ data }) => {
+        if (!data?.length) return
+        localStorage.setItem('memora:rediscover', today)
+        notify(`Remember this? “${data[Math.floor(Math.random() * data.length)].title}”`)
+      })
+  }, [])
+
   useEffect(() => {
-    const run = () => void flush().then(n => { if (n) void load(q, view, col, tag) })
+    const run = () => void flush().then(n => { if (n) { notify(`${n} memories saved offline were synced.`); void indexMemories(); void load(q, view, col, tag) } })
     run(); addEventListener('online', run)
     return () => removeEventListener('online', run)
   }, [q, view, col, tag, load])
@@ -106,7 +122,7 @@ export default function Workspace({ session }: { session: Session }) {
         </div>
       </header>
 
-      <Capture cols={cols} onSaved={() => { void load(q, view, col, tag); void loadMeta() }} />
+      <Capture cols={cols} onSaved={() => { void load(q, view, col, tag); void loadMeta(); void indexMemories() }} />
       <AskPanel token={session.access_token} onOpen={t => { setQ(t); setView('all') }} />
 
       <div className="mt-8 flex flex-wrap items-center gap-2">
@@ -123,7 +139,8 @@ export default function Workspace({ session }: { session: Session }) {
         <input className="field ml-auto w-full sm:w-64" type="search" placeholder="Search memories" aria-label="Search memories" value={q} onChange={e => setQ(e.target.value)} />
       </div>
 
-      {error && <p role="alert" className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-sm text-danger">{error}</p>}
+      <p className="sr-only" role="status">{loading ? 'Loading memories' : `${items.length} memories shown`}</p>
       {loading ? <p className="mt-6 text-muted">Loading…</p>
         : items.length === 0 ? <p className="mt-10 text-center text-muted">{q ? 'No memories match your search.' : 'Nothing here yet. Capture your first idea above.'}</p>
         : (
@@ -146,7 +163,7 @@ export default function Workspace({ session }: { session: Session }) {
                     </div>
                   </div>
                   {m.content && <div className="mt-2"><Markdown text={m.content.slice(0, 600)} /></div>}
-                  {editing === m.id && <EditForm m={m} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(q, view, col, tag) }} />}
+                  {editing === m.id && <EditForm m={m} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(q, view, col, tag); void indexMemories() }} />}
                   {filesFor === m.id && <Files userId={session.user.id} memoryId={m.id} />}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {m.memory_tags?.map(mt => mt.tags && (
@@ -177,28 +194,42 @@ function Capture({ cols, onSaved }: { cols: Opt[]; onSaved: () => void }) {
   const [collection, setCollection] = useState('')
   const [tagText, setTagText] = useState('')
   const [note, setNote] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+
+  function pick(f: File | null) {
+    setErr('')
+    if (f && f.size > MAX) return setErr('That file is larger than 10 MB.')
+    if (f && !ALLOWED.includes(f.type)) return setErr('Use an image, PDF, text, Word or audio file.')
+    setFile(f)
+  }
 
   async function save(e: FormEvent) {
     e.preventDefault(); setErr('')
     const parsed = NewMemory.safeParse({ title, content, type, source_url: url.trim() || null })
     if (!parsed.success) return setErr(parsed.error.issues[0].message)
     setBusy(true)
+    if (file && !navigator.onLine) { setBusy(false); return setErr('Voice notes, images and documents need an internet connection.') }
     const result = await submit({ ...parsed.data, collection_id: collection || null, tags: parseTags(tagText) })
     setBusy(false)
-    if (result === 'failed') return setErr('Could not save. Your text is still here, try again.')
-    setNote(result === 'queued' ? 'Saved on this device. It will sync when you are back online.' : '')
-    setTitle(''); setContent(''); setUrl(''); setTagText(''); onSaved()
+    if (result.status === 'failed') return setErr('Could not save. Your text is still here, try again.')
+    if (file && result.id) {
+      const { data: s } = await supabase.auth.getSession()
+      const ok = s.session ? await send(`${s.session.user.id}/${result.id}/${Date.now()}-${file.name.replace(/[^\w.-]+/g, '_')}`, file, s.session.access_token, () => undefined) : false
+      if (!ok) setErr('The memory was saved, but the file did not upload. Open it and attach the file again.')
+    }
+    setNote(result.status === 'queued' ? 'Saved on this device. It will sync when you are back online.' : '')
+    setTitle(''); setContent(''); setUrl(''); setTagText(''); setFile(null); onSaved()
   }
 
   return (
     <form onSubmit={save} className="space-y-2 rounded-lg border border-line bg-surface p-4" aria-label="Quick capture">
       <input className="field" placeholder="Capture an idea, link or note…" aria-label="Title" value={title} onChange={e => setTitle(e.target.value)} />
-      <textarea className="field min-h-20" placeholder="Details (optional)" aria-label="Content" value={content} onChange={e => setContent(e.target.value)} />
+      <Editor value={content} onChange={setContent} />
       <div className="flex flex-wrap gap-2">
-        <select className="field w-auto" aria-label="Type" value={type} onChange={e => setType(e.target.value as MemoryType)}>
-          {['note', 'idea', 'link', 'quote'].map(t => <option key={t}>{t}</option>)}
+        <select className="field w-auto" aria-label="Type" value={type} onChange={e => { setType(e.target.value as MemoryType); setFile(null) }}>
+          {['note', 'idea', 'link', 'quote', 'image', 'document', 'voice'].map(t => <option key={t}>{t}</option>)}
         </select>
         <input className="field min-w-0 flex-1" placeholder="Link (optional)" aria-label="Link" value={url} onChange={e => setUrl(e.target.value)} />
         <select className="field w-auto" aria-label="Collection" value={collection} onChange={e => setCollection(e.target.value)}>
@@ -207,8 +238,12 @@ function Capture({ cols, onSaved }: { cols: Opt[]; onSaved: () => void }) {
         <input className="field min-w-0 flex-1" placeholder="Tags, separated by commas" aria-label="Tags" value={tagText} onChange={e => setTagText(e.target.value)} />
         <button className="btn-primary" disabled={busy}>Save memory</button>
       </div>
+      {(type === 'image' || type === 'document') && (
+        <input type="file" className="field" aria-label="File" accept={type === 'image' ? 'image/*' : '.pdf,.txt,.docx'} onChange={e => pick(e.target.files?.[0] ?? null)} />
+      )}
+      {type === 'voice' && <Voice onFile={pick} />}
       {note && <p role="status" className="text-sm text-accent">{note}</p>}
-      {err && <p role="alert" className="text-sm text-red-400">{err}</p>}
+      {err && <p role="alert" className="text-sm text-danger">{err}</p>}
     </form>
   )
 }
@@ -238,7 +273,7 @@ function AskPanel({ token, onOpen }: { token: string; onOpen: (title: string) =>
         <input className="field" placeholder="Ask your memories, e.g. what did I save about Python?" aria-label="Question" value={question} onChange={e => setQuestion(e.target.value)} />
         <button className="btn-primary flex items-center gap-1" disabled={busy}><Sparkles size={14} />{busy ? 'Thinking…' : 'Ask'}</button>
       </form>
-      {err && <p role="alert" className="mt-2 text-sm text-red-400">{err}</p>}
+      {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
       {res && (
         <div className="mt-3 text-sm">
           <p className="text-xs text-muted">AI-generated answer, based only on your memories</p>
@@ -273,10 +308,10 @@ function EditForm({ m, onClose, onSaved }: { m: Memory; onClose: () => void; onS
   return (
     <form onSubmit={save} className="mt-3 space-y-2 rounded-md border border-line bg-raised p-3" aria-label="Edit memory">
       <input className="field" aria-label="Title" value={title} onChange={e => setTitle(e.target.value)} />
-      <textarea className="field min-h-24" aria-label="Content" value={content} onChange={e => setContent(e.target.value)} />
+      <Editor value={content} onChange={setContent} />
       <p className="text-xs text-muted">Markdown works: **bold**, *italic*, `code`, # heading, - list, [text](https://link)</p>
       <input className="field" placeholder="Link (optional)" aria-label="Link" value={url} onChange={e => setUrl(e.target.value)} />
-      {err && <p role="alert" className="text-sm text-red-400">{err}</p>}
+      {err && <p role="alert" className="text-sm text-danger">{err}</p>}
       <div className="flex gap-2"><button className="btn-primary">Save changes</button><button type="button" className="btn" onClick={onClose}>Cancel</button></div>
     </form>
   )

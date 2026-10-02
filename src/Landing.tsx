@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
+import Preview from './Preview'
 
 const CONTACT_EMAIL = 'bousminaselim@gmail.com' // change to your support address
 const go = (h: string) => { location.hash = h }
@@ -33,12 +34,14 @@ const STORY = [
   ['Capture in seconds', 'Type a title, paste a link, and save. A note, an idea, a quote or a bookmark takes the same few seconds, so nothing slips away while you are busy.'],
   ['Find it again', 'Search across titles, text and links as you type. Or ask in plain language, like “what did I save about Python?”, and get an answer built only from your own memories, with links back to them.'],
   ['See your life in order', 'The timeline groups what you saved into today, this week, this month and this year, so you can retrace what you were thinking and when.'],
+  ['Works offline', 'Lost your connection on a train? Keep capturing. Memories you save offline wait on your device and sync automatically when you are back online. Install MEMORA from your browser to open it like an app.'],
   ['Private by design', 'Your memories belong to you. Every row is locked to your account at the database level, and AI answers only use memories your account can already read. AI is optional: if it is unavailable, everything else keeps working.']
 ]
 
 export default function Landing() {
   return (
     <div>
+      <a href="#" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-bg" onClick={e => { e.preventDefault(); scrollTo('story') }}>Skip to content</a>
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <span className="font-display text-2xl">MEMORA</span>
         <nav className="flex items-center gap-4 text-sm" aria-label="Site">
@@ -62,6 +65,8 @@ export default function Landing() {
           <Universe />
         </section>
 
+        <Preview />
+
         <section id="story" className="mx-auto max-w-3xl space-y-14 px-5 py-16">
           {STORY.map(([h, p]) => (
             <div key={h} className="border-l-2 border-accent pl-6">
@@ -69,6 +74,17 @@ export default function Landing() {
               <p className="mt-3 max-w-xl leading-relaxed text-muted">{p}</p>
             </div>
           ))}
+        </section>
+
+        <section className="border-t border-line" aria-label="Use cases">
+          <div className="mx-auto max-w-3xl px-5 py-16">
+            <h2 className="font-display text-3xl">Made for the way you learn and work</h2>
+            <dl className="mt-6 grid gap-6 sm:grid-cols-2">
+              {[['Students', 'Lecture notes, readings and exam ideas, grouped by course.'], ['Developers', 'Snippets, docs and the article you will want again next month.'], ['Researchers', 'Sources and quotes, tagged so connections surface later.'], ['Everyone else', 'Trips, books, goals and the thought you had in the shower.']].map(([k, v]) => (
+                <div key={k}><dt className="font-medium text-accent">{k}</dt><dd className="mt-1 text-sm text-muted">{v}</dd></div>
+              ))}
+            </dl>
+          </div>
         </section>
 
         <section id="about" className="border-t border-line">

@@ -29,7 +29,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? await sb.from('memories').select('id,title,content').eq('is_archived', false)
         .textSearch('search', words.join(' or '), { type: 'websearch', config: 'simple' }).limit(8)
     : { data: [] }
-  const memories = found ?? []
+  let memories = found ?? []
+  try { // Semantic matches by meaning; optional, so any failure falls back to keyword results
+    const e = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: process.env.OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-small', input: body.data.question })
+    })
+    if (e.ok) {
+      const vec = (await e.json()).data[0].embedding as number[]
+      const { data: sem } = await sb.rpc('match_memories', { query_embedding: JSON.stringify(vec), match_count: 8 })
+      const have = new Set(memories.map(m => m.id))
+      const extra = ((sem ?? []) as { id: string; title: string; content: string; similarity: number }[]).filter(s => s.similarity > 0.3 && !have.has(s.id))
+      memories = [...memories, ...extra].slice(0, 8)
+    }
+  } catch { /* keyword search still works */ }
   if (memories.length === 0) {
     return res.json({ answer: 'I could not find anything about that in your memories.', sources: [] })
   }

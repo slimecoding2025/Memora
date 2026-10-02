@@ -40,7 +40,7 @@ export default function Collections() {
         <input className="field min-w-0 flex-1" placeholder="Description (optional)" aria-label="Description" value={desc} onChange={e => setDesc(e.target.value)} />
         <button className="btn-primary">Create collection</button>
       </form>
-      {err && <p role="alert" className="mt-3 text-sm text-red-400">{err}</p>}
+      {err && <p role="alert" className="mt-3 text-sm text-danger">{err}</p>}
       {!cols ? <p className="mt-6 text-muted">Loading…</p>
         : cols.length === 0 ? <p className="mt-10 text-muted">No collections yet. Create one above, then file memories into it.</p>
         : (

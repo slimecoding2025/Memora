@@ -18,5 +18,8 @@ Never lose an idea. Never forget what matters. A private place to capture, searc
 ## Features
 Auth, memories (create, edit with conflict protection, favorite, archive, delete), search, collections, tags, timeline, graph, Ctrl+K palette, private file attachments, account export, AI "Ask" (server-side OpenRouter), Markdown formatting, offline capture queue, PNG app icons, unit tests (`npm test`), PWA shell, dark/light theme.
 
+## Setup for newer features
+Run `supabase/migrations/0002_media_and_semantic.sql` after 0001. Then open Account > "Index my memories" once so Ask can search by meaning. Optional env: `OPENROUTER_EMBED_MODEL`.
+
 ## Not built yet
-WYSIWYG editor (Markdown is supported instead), upload progress bar, semantic search with embeddings.
+True WYSIWYG editing (a formatting toolbar with live preview is included), push notifications while the app is closed, offline queue for files, speech-to-text for voice notes.

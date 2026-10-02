@@ -4,7 +4,7 @@ export default {
     extend: {
       colors: {
         bg: 'var(--bg)', surface: 'var(--surface)', raised: 'var(--raised)',
-        line: 'var(--line)', ink: 'var(--ink)', muted: 'var(--muted)', accent: 'var(--accent)'
+        line: 'var(--line)', ink: 'var(--ink)', muted: 'var(--muted)', accent: 'var(--accent)', danger: 'var(--danger)'
       },
       fontFamily: { display: ['Fraunces', 'Georgia', 'serif'], sans: ['Inter', 'system-ui', 'sans-serif'] }
     }

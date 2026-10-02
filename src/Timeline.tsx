@@ -23,7 +23,7 @@ export default function Timeline() {
       .then(({ data, error: e }) => { if (e) setError('Could not load your timeline. Your memories are safe, try again.'); else setItems(data as Memory[]) })
   }, [])
 
-  if (error) return <p role="alert" className="p-6 text-sm text-red-400">{error}</p>
+  if (error) return <p role="alert" className="p-6 text-sm text-danger">{error}</p>
   if (!items) return <p className="p-6 text-muted">Loading…</p>
   if (items.length === 0) return <p className="p-10 text-center text-muted">Your timeline is empty. Save a memory and it appears here.</p>
 

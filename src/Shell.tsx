@@ -5,6 +5,7 @@ import Workspace from './Workspace'
 import Timeline from './Timeline'
 import Graph from './Graph'
 import CommandPalette from './CommandPalette'
+import Bell from './Bell'
 import Collections from './Collections'
 import Account from './Account'
 import { supabase } from './lib/supabase'
@@ -37,6 +38,7 @@ export default function Shell({ session, page }: { session: Session; page: strin
 
   return (
     <div className="min-h-screen md:flex">
+      <a href="#" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-bg" onClick={e => { e.preventDefault(); document.getElementById('main')?.focus() }}>Skip to content</a>
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-line p-4 md:flex">
         <a href="#/app" className="font-display text-2xl">MEMORA</a>
         <button className="btn mt-6 flex w-full items-center justify-between text-muted" onClick={() => setPalette(true)}><span className="flex items-center gap-2"><Search size={14} />Search</span><kbd className="text-xs">Ctrl K</kbd></button>
@@ -51,16 +53,18 @@ export default function Shell({ session, page }: { session: Session; page: strin
         <div className="mt-auto space-y-2">
           {!online && <p role="status" className="text-xs text-accent">You are offline</p>}
           <div className="flex gap-2">
+            <Bell up />
             <button className="btn" aria-label="Toggle theme" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
             <button className="btn flex items-center gap-1" onClick={signOut}><LogOut size={16} />Sign out</button>
           </div>
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 pb-24 md:pb-8">
+      <main id="main" tabIndex={-1} className="min-w-0 flex-1 pb-24 focus:outline-none md:pb-8">
         <div className="flex items-center justify-between px-4 pt-4 md:hidden">
           <span className="font-display text-xl">MEMORA</span>
           <div className="flex items-center gap-2">
+            <Bell />
             <button className="btn" aria-label="Search" onClick={() => setPalette(true)}><Search size={16} /></button>
             {!online && <span role="status" className="text-xs text-accent">Offline</span>}
             <button className="btn" aria-label="Toggle theme" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>

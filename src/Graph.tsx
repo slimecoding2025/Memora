@@ -58,7 +58,7 @@ export default function Graph() {
   const zoom = (f: number) => setView(v => ({ ...v, k: Math.max(0.3, Math.min(4, v.k * f)) }))
   const g = useMemo(() => (items ? build(items) : null), [items])
 
-  if (error) return <p role="alert" className="p-6 text-sm text-red-400">{error}</p>
+  if (error) return <p role="alert" className="p-6 text-sm text-danger">{error}</p>
   if (!items || !g) return <p className="p-6 text-muted">Loading…</p>
   if (items.length < 2) return <p className="p-10 text-muted">Save at least two memories with shared tags or a shared collection to see them connect.</p>
 
@@ -87,7 +87,8 @@ export default function Graph() {
         }}>
         {g.edges.map(([a, b]) => <line key={`${a}-${b}`} x1={g.pos[a].x} y1={g.pos[a].y} x2={g.pos[b].x} y2={g.pos[b].y} stroke="var(--line)" strokeWidth="1" />)}
         {items.map((m, i) => (
-          <g key={m.id} opacity={match(m) ? 1 : 0.2} className="cursor-pointer" onClick={() => setSel(m)}>
+          <g key={m.id} opacity={match(m) ? 1 : 0.2} className="cursor-pointer" role="button" tabIndex={0} aria-label={`Memory: ${m.title}`}
+            onClick={() => setSel(m)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(m) } }}>
             <circle cx={g.pos[i].x} cy={g.pos[i].y} r={sel?.id === m.id ? 10 : 7} fill={sel?.id === m.id ? 'var(--accent)' : 'var(--raised)'} stroke="var(--accent)" strokeWidth="1.5" />
             <text x={g.pos[i].x} y={g.pos[i].y + 20} textAnchor="middle" fontSize="10" fill="var(--muted)">{m.title.slice(0, 20)}</text>
           </g>
