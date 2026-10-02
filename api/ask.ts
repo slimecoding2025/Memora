@@ -48,6 +48,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.json({ answer: 'I could not find anything about that in your memories.', sources: [] })
   }
 
+  if (!process.env.OPENROUTER_API_KEY) {
+    return res.status(503).json({ error: 'AI is temporarily unavailable. Your memories are safe.', code: 'no_key' })
+  }
   const context = memories.map(m => `[${m.id}] ${m.title}\n${(m.content ?? '').slice(0, 800)}`).join('\n---\n')
   try {
     const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -65,9 +68,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ]
       })
     })
-    if (!r.ok) throw new Error(`upstream ${r.status}`)
+    if (!r.ok) throw new Error(`upstream_${r.status}`)
     const data = await r.json()
-    const parsed = Model.parse(JSON.parse(data.choices[0].message.content))
+    const raw = String(data.choices?.[0]?.message?.content ?? '').trim()
+    if (!raw) throw new Error('empty_output')
+    let parsed: z.infer<typeof Model>
+    try { parsed = Model.parse(JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, ''))) } // some models wrap JSON in code fences
+    catch { parsed = { answer: raw.slice(0, 4000), sources: [] } }
     const allowed = new Set(memories.map(m => m.id))
     const sources = parsed.sources.filter(id => allowed.has(id)) // drop fabricated ids
     await sb.from('ai_generations').insert({
@@ -78,8 +85,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       answer: parsed.answer,
       sources: memories.filter(m => sources.includes(m.id)).map(m => ({ id: m.id, title: m.title }))
     })
-  } catch {
+  } catch (err) {
+    const code = err instanceof Error && /^(upstream_\d+|empty_output)$/.test(err.message) ? err.message : 'error'
+    console.error('ask failed:', code) // status only, never user content
     await sb.from('ai_generations').insert({ feature: 'ask', status: 'error' })
-    return res.status(503).json({ error: 'AI is temporarily unavailable. Your memories are safe.' })
+    return res.status(503).json({ error: 'AI is temporarily unavailable. Your memories are safe.', code })
   }
 }

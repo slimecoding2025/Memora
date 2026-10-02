@@ -261,9 +261,9 @@ function AskPanel({ token, onOpen }: { token: string; onOpen: (title: string) =>
     try {
       const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ question }) })
       const data = await r.json()
-      if (!r.ok) setErr(data.error ?? 'AI is temporarily unavailable. Your memories are safe.')
+      if (!r.ok) setErr(`${data.error ?? 'AI is temporarily unavailable. Your memories are safe.'}${data.code ? ` (ref: ${data.code})` : ''}`)
       else setRes(data as Answer)
-    } catch { setErr('AI is temporarily unavailable. Your memories are safe.') }
+    } catch { setErr('AI is temporarily unavailable. Your memories are safe. (ref: no_response)') }
     setBusy(false)
   }
 

@@ -27,13 +27,20 @@ export default function Files({ userId, memoryId }: { userId: string; memoryId: 
   const dir = `${userId}/${memoryId}`
   const [files, setFiles] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
+  const [urls, setUrls] = useState<Record<string, string>>({})
   const [pct, setPct] = useState<number | null>(null)
   const [err, setErr] = useState('')
 
   const load = useCallback(async () => {
     const { data, error } = await bucket().list(dir)
-    if (error) setErr('Could not load files. Try again.')
-    else setFiles((data ?? []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => f.name))
+    if (error) return setErr('Could not load files. Try again.')
+    const names = (data ?? []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => f.name)
+    setFiles(names)
+    const media = names.filter(n => /\.(png|jpe?g|webp|gif|webm|m4a|mp3)$/i.test(n))
+    if (media.length) {
+      const { data: signed } = await bucket().createSignedUrls(media.map(n => `${dir}/${n}`), 3600)
+      setUrls(Object.fromEntries((signed ?? []).flatMap((x, i) => (x.signedUrl ? [[media[i], x.signedUrl]] : []))))
+    }
   }, [dir])
   useEffect(() => { void load() }, [load])
 
@@ -75,12 +82,14 @@ export default function Files({ userId, memoryId }: { userId: string; memoryId: 
       {files.length === 0 ? <p className="mt-2 text-muted">No files yet.</p> : (
         <ul className="mt-2 space-y-1">
           {files.map(n => (
-            <li key={n} className="flex items-center justify-between gap-2">
+            <li key={n} className="flex flex-wrap items-center justify-between gap-2">
               <span className="min-w-0 truncate">{n.replace(/^\d+-/, '')}</span>
               <span className="flex shrink-0 gap-1">
                 <button className="btn" aria-label={`Open ${n}`} onClick={() => open(n)}><Download size={14} /></button>
                 <button className="btn" aria-label={`Delete ${n}`} onClick={() => remove(n)}><Trash2 size={14} /></button>
               </span>
+              {urls[n] && /\.(png|jpe?g|webp|gif)$/i.test(n) && <img src={urls[n]} alt={n.replace(/^\d+-/, '')} loading="lazy" className="max-h-48 w-full rounded object-contain" />}
+              {urls[n] && /\.(webm|m4a|mp3)$/i.test(n) && <audio controls src={urls[n]} className="w-full" />}
             </li>
           ))}
         </ul>

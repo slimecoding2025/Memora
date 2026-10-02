@@ -33,7 +33,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await sb.from('ai_generations').insert({ feature: 'embed', status: 'ok', prompt_tokens: data.usage?.prompt_tokens })
     const { count: left } = await sb.from('memories').select('id', { count: 'exact', head: true }).is('embedding', null)
     return res.json({ done: rows.length, remaining: left ?? 0 })
-  } catch {
+  } catch (err) {
+    console.error('embed failed:', err instanceof Error ? err.message : 'unknown') // status only, never user content
     await sb.from('ai_generations').insert({ feature: 'embed', status: 'error' })
     return res.status(503).json({ error: 'AI is temporarily unavailable. Your memories are safe.' })
   }
