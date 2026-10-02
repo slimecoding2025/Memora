@@ -57,4 +57,13 @@ describe('/api/ask', () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => (url.includes('embeddings') ? { ok: false } : { ok: true, json: async () => ({ choices: [{ message: { content: fenced } }], usage: {} }) })))
     expect((await run(post({ question: 'python?' }))).body).toEqual({ answer: 'Fenced.', sources: [{ id: 'a', title: 'Python sockets' }] })
   })
+  it('sends a fallback list when several models are configured', async () => {
+    process.env.OPENROUTER_MODEL = 'a/one:free, b/two'
+    const f = vi.fn(async (url: string) => (url.includes('embeddings') ? { ok: false } : chat({ answer: 'ok', sources: [] })))
+    vi.stubGlobal('fetch', f)
+    await run(post({ question: 'python?' }))
+    delete process.env.OPENROUTER_MODEL
+    const call = f.mock.calls.find(c => String(c[0]).includes('chat/completions')) as unknown as [string, { body: string }]
+    expect(JSON.parse(call[1].body).models).toEqual(['a/one:free', 'b/two'])
+  })
 })

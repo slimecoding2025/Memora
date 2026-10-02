@@ -51,13 +51,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.OPENROUTER_API_KEY) {
     return res.status(503).json({ error: 'AI is temporarily unavailable. Your memories are safe.', code: 'no_key' })
   }
+  // OPENROUTER_MODEL may list several models separated by commas; OpenRouter tries the next one if a model fails or is rate limited
+  const models = (process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini').split(',').map(m => m.trim()).filter(Boolean)
   const context = memories.map(m => `[${m.id}] ${m.title}\n${(m.content ?? '').slice(0, 800)}`).join('\n---\n')
   try {
     const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL ?? 'openai/gpt-4o-mini',
+        ...(models.length > 1 ? { models } : { model: models[0] }),
         max_tokens: 1500,
         messages: [
           { role: 'system', content:
