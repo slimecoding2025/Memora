@@ -1,25 +1,15 @@
 # MEMORA
 
-Never lose an idea. Never forget what matters. A private place to capture, search and rediscover your notes, ideas and links.
+Never lose an idea. Never forget what matters. A private place to capture, search and rediscover your notes, ideas, links, images, documents and voice notes.
 
-**Stack:** React + TypeScript + Vite, Tailwind, Motion, Supabase (Auth, Postgres, Storage, RLS), OpenRouter via a Vercel serverless function, PWA.
-
-## Setup
-1. **Supabase:** create a project. In the SQL editor run `supabase/migrations/0001_init.sql`. Under Authentication > URL Configuration add your Vercel URL and `http://localhost:5173`.
-2. **Env:** copy `.env.example` to `.env` and fill in the Supabase URL and anon key (Project Settings > API). Never use the service-role key.
-3. **Local:** `npm install && npm run dev`. For the AI route locally use `npx vercel dev` with `OPENROUTER_API_KEY` set.
-4. **Vercel:** import the GitHub repo. Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `OPENROUTER_API_KEY`, and optionally `OPENROUTER_MODEL` in Project Settings > Environment Variables, then deploy.
-
-## Security model
-- RLS on every table; `user_id` defaults to `auth.uid()` and is never sent by the client.
-- `/api/ask` verifies the user's JWT, queries memories as that user (so RLS applies), sends at most 8 truncated snippets to OpenRouter, drops source IDs the model invents, logs metadata only, and rate-limits to 10 requests/minute.
-- `OPENROUTER_API_KEY` exists only in server environment variables.
+**Stack:** React + TypeScript + Vite, Tailwind, Motion, Supabase (Auth, Postgres, Storage, RLS), PWA.
 
 ## Features
-Auth, memories (create, edit with conflict protection, favorite, archive, delete), search, collections, tags, timeline, graph, Ctrl+K palette, private file attachments, account export, AI "Ask" (server-side OpenRouter), Markdown formatting, offline capture queue, PNG app icons, unit tests (`npm test`), PWA shell, dark/light theme.
+Auth, memories (create, edit with conflict protection, favorite, archive, delete), full-text search, collections, tags, timeline, graph, Ctrl+K palette, private file attachments with previews and upload progress, voice notes, Markdown toolbar with preview, offline capture queue, in-app notifications, account export, dark/light theme, installable PWA. No AI features: nothing you save is sent to a third party.
 
-## Setup for newer features
-Run `supabase/migrations/0002_media_and_semantic.sql` after 0001. Then open Account > "Index my memories" once so Ask can search by meaning. Optional env: `OPENROUTER_EMBED_MODEL`.
-
-## Not built yet
-True WYSIWYG editing (a formatting toolbar with live preview is included), push notifications while the app is closed, offline queue for files, speech-to-text for voice notes.
+## Setup
+1. Create a Supabase project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_media_and_semantic.sql` (its vector column is unused and harmless).
+2. Under Authentication > URL Configuration add your site URL and `http://localhost:5173`.
+3. Copy `.env.example` to `.env` and fill in the Supabase URL and anon key. Never use the service-role key.
+4. `npm install && npm run dev`. Tests: `npm test`.
+5. Deploy: push to GitHub, import in Vercel, add the two `VITE_` variables, deploy.

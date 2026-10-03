@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Archive, Paperclip, Pencil, LogOut, Moon, Sparkles, Star, Sun, Trash2 } from 'lucide-react'
+import { Archive, Paperclip, Pencil, LogOut, Moon, Star, Sun, Trash2 } from 'lucide-react'
 import { NewMemory, parseTags } from './lib/validation'
 import { flush, submit } from './lib/offline'
 import Markdown from './Markdown'
 import Editor from './Editor'
 import Voice from './Voice'
-import { indexMemories } from './lib/ai'
 import { notify } from './lib/notify'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
@@ -16,7 +15,6 @@ import Files, { ALLOWED, MAX, send } from './Files'
 type Opt = { id: string; name: string }
 
 type View = 'all' | 'favorites' | 'archive'
-interface Answer { answer: string; sources: { id: string; title: string }[] }
 
 export default function Workspace({ session }: { session: Session }) {
   const [items, setItems] = useState<Memory[]>([])
@@ -79,7 +77,7 @@ export default function Workspace({ session }: { session: Session }) {
   }, [])
 
   useEffect(() => {
-    const run = () => void flush().then(n => { if (n) { notify(`${n} memories saved offline were synced.`); void indexMemories(); void load(q, view, col, tag) } })
+    const run = () => void flush().then(n => { if (n) { notify(`${n} memories saved offline were synced.`); void load(q, view, col, tag) } })
     run(); addEventListener('online', run)
     return () => removeEventListener('online', run)
   }, [q, view, col, tag, load])
@@ -122,9 +120,8 @@ export default function Workspace({ session }: { session: Session }) {
         </div>
       </header>
 
-      <Capture cols={cols} onSaved={() => { void load(q, view, col, tag); void loadMeta(); void indexMemories() }} />
-      <AskPanel token={session.access_token} onOpen={t => { setQ(t); setView('all') }} />
-
+      <Capture cols={cols} onSaved={() => { void load(q, view, col, tag); void loadMeta() }} />
+      
       <div className="mt-8 flex flex-wrap items-center gap-2">
         {(['all', 'favorites', 'archive'] as View[]).map(v => (
           <button key={v} onClick={() => setView(v)} aria-pressed={view === v}
@@ -163,7 +160,7 @@ export default function Workspace({ session }: { session: Session }) {
                     </div>
                   </div>
                   {m.content && <div className="mt-2"><Markdown text={m.content.slice(0, 600)} /></div>}
-                  {editing === m.id && <EditForm m={m} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(q, view, col, tag); void indexMemories() }} />}
+                  {editing === m.id && <EditForm m={m} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(q, view, col, tag) }} />}
                   {filesFor === m.id && <Files userId={session.user.id} memoryId={m.id} />}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {m.memory_tags?.map(mt => mt.tags && (
@@ -245,44 +242,6 @@ function Capture({ cols, onSaved }: { cols: Opt[]; onSaved: () => void }) {
       {note && <p role="status" className="text-sm text-accent">{note}</p>}
       {err && <p role="alert" className="text-sm text-danger">{err}</p>}
     </form>
-  )
-}
-
-function AskPanel({ token, onOpen }: { token: string; onOpen: (title: string) => void }) {
-  const [question, setQuestion] = useState('')
-  const [res, setRes] = useState<Answer | null>(null)
-  const [err, setErr] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  async function ask(e: FormEvent) {
-    e.preventDefault(); setErr(''); setRes(null)
-    if (question.trim().length < 3) return
-    setBusy(true)
-    try {
-      const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ question }) })
-      const data = await r.json()
-      if (!r.ok) setErr(`${data.error ?? 'AI is temporarily unavailable. Your memories are safe.'}${data.code ? ` (ref: ${data.code})` : ''}`)
-      else setRes(data as Answer)
-    } catch { setErr('AI is temporarily unavailable. Your memories are safe. (ref: no_response)') }
-    setBusy(false)
-  }
-
-  return (
-    <section className="mt-4 rounded-lg border border-line bg-surface p-4" aria-label="Ask your memories">
-      <form onSubmit={ask} className="flex gap-2">
-        <input className="field" placeholder="Ask your memories, e.g. what did I save about Python?" aria-label="Question" value={question} onChange={e => setQuestion(e.target.value)} />
-        <button className="btn-primary flex items-center gap-1" disabled={busy}><Sparkles size={14} />{busy ? 'Thinking…' : 'Ask'}</button>
-      </form>
-      {err && <p role="alert" className="mt-2 text-sm text-danger">{err}</p>}
-      {res && (
-        <div className="mt-3 text-sm">
-          <p className="text-xs text-muted">AI-generated answer, based only on your memories</p>
-          <p className="mt-1 whitespace-pre-wrap">{res.answer}</p>
-          {res.sources.length > 0 && <p className="mt-2 text-muted">Sources: {res.sources.map(s => (
-            <button key={s.id} className="mr-2 text-accent underline" onClick={() => onOpen(s.title)}>{s.title}</button>))}</p>}
-        </div>
-      )}
-    </section>
   )
 }
 

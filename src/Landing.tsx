@@ -32,10 +32,10 @@ function Universe() {
 
 const STORY = [
   ['Capture in seconds', 'Type a title, paste a link, and save. A note, an idea, a quote or a bookmark takes the same few seconds, so nothing slips away while you are busy.'],
-  ['Find it again', 'Search across titles, text and links as you type. Or ask in plain language, like “what did I save about Python?”, and get an answer built only from your own memories, with links back to them.'],
+  ['Find it again', 'Search across titles, text, tags and links as you type, then narrow by collection or tag to get straight back to what you saved.'],
   ['See your life in order', 'The timeline groups what you saved into today, this week, this month and this year, so you can retrace what you were thinking and when.'],
   ['Works offline', 'Lost your connection on a train? Keep capturing. Memories you save offline wait on your device and sync automatically when you are back online. Install MEMORA from your browser to open it like an app.'],
-  ['Private by design', 'Your memories belong to you. Every row is locked to your account at the database level, and AI answers only use memories your account can already read. AI is optional: if it is unavailable, everything else keeps working.']
+  ['Private by design', 'Your memories belong to you. Every row is locked to your account at the database level, and nothing you save is sent to any AI service.']
 ]
 
 export default function Landing() {
