@@ -52,10 +52,10 @@ export default function Shell({ session, page }: { session: Session; page: strin
         </nav>
         <div className="mt-auto space-y-2">
           {!online && <p role="status" className="text-xs text-accent">You are offline</p>}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Bell up />
             <button className="btn" aria-label="Toggle theme" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
-            <button className="btn flex items-center gap-1" onClick={signOut}><LogOut size={16} />Sign out</button>
+            <button className="btn flex items-center gap-1 whitespace-nowrap" onClick={signOut}><LogOut size={16} />Sign out</button>
           </div>
         </div>
       </aside>
