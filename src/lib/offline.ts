@@ -5,7 +5,13 @@ export interface Draft {
 }
 const KEY = 'memora:queue'
 const read = (): Draft[] => { try { return JSON.parse(localStorage.getItem(KEY) ?? '[]') as Draft[] } catch { return [] } }
-const write = (q: Draft[]) => localStorage.setItem(KEY, JSON.stringify(q))
+const write = (q: Draft[]) => {
+  localStorage.setItem(KEY, JSON.stringify(q))
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('memora-queue'))
+}
+/** Memories waiting on this device to be synced. */
+export const pending = read
+export function discardPending(index: number) { write(read().filter((_, i) => i !== index)) }
 
 async function saveMemory(d: Draft): Promise<string | null> {
   const { tags, ...row } = d

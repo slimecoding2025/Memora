@@ -39,6 +39,7 @@ export default function Account({ session, onSignOut }: { session: Session; onSi
       <div className="space-y-3">
         <h2 className="font-medium">Your data</h2>
         <p className="text-sm text-muted">Download every memory as a JSON file.</p>
+        <p className="text-sm text-muted">Memories saved while offline stay only in this browser until they sync. Clearing your browser data before then deletes them.</p>
         <button className="btn" onClick={exportData}>Export memories</button>
       </div>
       {msg && <p role="status" className={msg.ok ? 'text-sm text-accent' : 'text-sm text-danger'}>{msg.text}</p>}

@@ -18,4 +18,11 @@ describe('offline queue', () => {
     const { flush } = await import('./offline')
     expect(await flush()).toBe(0)
   })
+  it('lists and discards memories waiting to sync', async () => {
+    const { submit, pending, discardPending } = await import('./offline')
+    await submit(draft)
+    expect(pending()).toHaveLength(1)
+    discardPending(0)
+    expect(pending()).toHaveLength(0)
+  })
 })

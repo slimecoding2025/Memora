@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Archive, Paperclip, Pencil, LogOut, Moon, Star, Sun, Trash2 } from 'lucide-react'
+import { Archive, Cloud, CloudOff, Paperclip, Pencil, LogOut, Moon, Star, Sun, Trash2 } from 'lucide-react'
 import { NewMemory, parseTags } from './lib/validation'
-import { flush, submit } from './lib/offline'
+import { discardPending, flush, submit } from './lib/offline'
+import { usePending } from './lib/usePending'
 import Markdown from './Markdown'
 import Editor from './Editor'
 import Voice from './Voice'
@@ -24,6 +25,7 @@ export default function Workspace({ session }: { session: Session }) {
   const [tag, setTag] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [filesFor, setFilesFor] = useState<string | null>(null)
+  const waiting = usePending()
   const [cols, setCols] = useState<Opt[]>([])
   const [tags, setTags] = useState<Opt[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,6 +101,9 @@ export default function Workspace({ session }: { session: Session }) {
     const { error: e } = await supabase.from('memories').delete().eq('id', id)
     if (e) setError('Could not delete that memory.'); else void load(q, view, col, tag)
   }
+  function syncNow() {
+    void flush().then(n => { if (n) { notify(`${n} memories saved offline were synced.`); void load(q, view, col, tag); void loadMeta() } })
+  }
   async function removeTag(memoryId: string, tagId: string) {
     const { error: e } = await supabase.from('memory_tags').delete().eq('memory_id', memoryId).eq('tag_id', tagId)
     if (e) setError('Could not remove that tag.'); else void load(q, view, col, tag)
@@ -136,6 +141,21 @@ export default function Workspace({ session }: { session: Session }) {
         <input className="field ml-auto w-full sm:w-64" type="search" placeholder="Search memories" aria-label="Search memories" value={q} onChange={e => setQ(e.target.value)} />
       </div>
 
+      {waiting.length > 0 && (
+        <section className="mt-4 rounded-lg border border-accent bg-surface p-4" aria-label="Notes waiting to sync">
+          <p className="flex items-center gap-2 font-medium"><CloudOff size={16} aria-hidden />{waiting.length} {waiting.length === 1 ? 'note is' : 'notes are'} saved on this device only</p>
+          <p className="mt-1 text-sm text-muted">They sync to your account when you are online and have MEMORA open. Clearing your browser data before then deletes them.</p>
+          <ul className="mt-3 space-y-2">
+            {waiting.map((d, i) => (
+              <li key={`${d.title}-${i}`} className="flex items-center justify-between gap-2 rounded-md border border-line bg-raised p-2 text-sm">
+                <span className="min-w-0 truncate">{d.title}</span>
+                <button className="btn" aria-label={`Discard ${d.title}`} onClick={() => discardPending(i)}><Trash2 size={14} /></button>
+              </li>
+            ))}
+          </ul>
+          {online && <button className="btn mt-3" onClick={syncNow}>Sync now</button>}
+        </section>
+      )}
       {error && <p role="alert" className="mt-4 text-sm text-danger">{error}</p>}
       <p className="sr-only" role="status">{loading ? 'Loading memories' : `${items.length} memories shown`}</p>
       {loading ? <p className="mt-6 text-muted">Loading…</p>
@@ -149,7 +169,7 @@ export default function Workspace({ session }: { session: Session }) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="font-medium">{m.title}</h2>
-                      <p className="text-xs text-muted">{m.type} · {new Date(m.created_at).toLocaleDateString()}{m.collections ? ` · ${m.collections.name}` : ''}</p>
+                      <p className="text-xs text-muted">{m.type} · {new Date(m.created_at).toLocaleDateString()}{m.collections ? ` · ${m.collections.name}` : ''} · <span className="inline-flex items-center gap-1" title="A copy is saved in your account"><Cloud size={12} aria-hidden />Synced</span></p>
                     </div>
                     <div className="flex shrink-0 gap-1">
                       <button className="btn" aria-label="Favorite" aria-pressed={m.is_favorite} onClick={() => patch(m.id, { is_favorite: !m.is_favorite })}><Star size={14} className={m.is_favorite ? 'fill-current text-accent' : ''} /></button>
@@ -216,7 +236,7 @@ function Capture({ cols, onSaved }: { cols: Opt[]; onSaved: () => void }) {
       const ok = s.session ? await send(`${s.session.user.id}/${result.id}/${Date.now()}-${file.name.replace(/[^\w.-]+/g, '_')}`, file, s.session.access_token, () => undefined) : false
       if (!ok) setErr('The memory was saved, but the file did not upload. Open it and attach the file again.')
     }
-    setNote(result.status === 'queued' ? 'Saved on this device. It will sync when you are back online.' : '')
+    setNote(result.status === 'queued' ? 'Saved on this device only. It syncs when you are back online. Clearing your browser data before then deletes it.' : '')
     setTitle(''); setContent(''); setUrl(''); setTagText(''); setFile(null); onSaved()
   }
 
