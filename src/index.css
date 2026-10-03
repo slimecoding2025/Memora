@@ -15,6 +15,6 @@ body { background: var(--bg); color: var(--ink); font-family: Inter, system-ui, 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 @layer components {
 .field { @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-sm placeholder:text-muted; }
-.btn { @apply min-h-10 rounded-md border border-line bg-raised px-3 py-2 text-sm font-medium transition-colors hover:border-accent; }
-.btn-primary { @apply rounded-md bg-accent px-3 py-2 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50; }
+.btn { @apply min-h-10 rounded-md border border-line bg-raised px-3 py-2 text-sm font-medium transition hover:border-accent active:scale-[0.97]; }
+.btn-primary { @apply rounded-md bg-accent px-3 py-2 text-sm font-semibold text-bg transition hover:opacity-90 active:scale-[0.97] disabled:opacity-50; }
 }

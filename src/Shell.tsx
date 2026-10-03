@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import type { Session } from '@supabase/supabase-js'
 import { BookOpen, Clock, Folder, Network, Search, LogOut, Moon, Sun, User } from 'lucide-react'
 import Workspace from './Workspace'
@@ -45,8 +46,9 @@ export default function Shell({ session, page }: { session: Session; page: strin
         <nav className="mt-4 flex flex-col gap-1" aria-label="Main">
           {NAV.map(n => (
             <a key={n.id} href={`#/app/${n.id}`} aria-current={current === n.id ? 'page' : undefined}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-raised ${current === n.id ? 'bg-raised text-accent' : 'text-muted'}`}>
-              <n.icon size={16} />{n.label}
+              className={`relative flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:text-ink ${current === n.id ? 'text-accent' : 'text-muted'}`}>
+              {current === n.id && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-md bg-raised" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
+              <span className="relative z-10 flex items-center gap-2"><n.icon size={16} />{n.label}</span>
             </a>
           ))}
         </nav>
@@ -70,11 +72,15 @@ export default function Shell({ session, page }: { session: Session; page: strin
             <button className="btn" aria-label="Toggle theme" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
           </div>
         </div>
-        {current === '' && <Workspace key={location.hash} session={session} />}
+        <AnimatePresence mode="wait">
+          <motion.div key={current} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: 'spring', stiffness: 400, damping: 34 }}>
+            {current === '' && <Workspace key={location.hash} session={session} />}
         {current === 'collections' && <Collections />}
         {current === 'timeline' && <Timeline />}
         {current === 'graph' && <Graph />}
         {current === 'account' && <Account session={session} onSignOut={signOut} />}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <CommandPalette open={palette} setOpen={setPalette} />

@@ -1,34 +1,11 @@
-import { motion, useReducedMotion } from 'motion/react'
+import { motion, useScroll, useSpring } from 'motion/react'
+import Hero3D from './Hero3D'
 import Preview from './Preview'
 import { CONTACT_EMAIL } from './config'
 
 const go = (h: string) => { location.hash = h }
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
-const NODES = [
-  { x: 200, y: 150, r: 12, t: 'Python' }, { x: 90, y: 80, r: 8, t: 'Linux' }, { x: 310, y: 70, r: 9, t: 'Security' },
-  { x: 330, y: 200, r: 7, t: 'Books' }, { x: 110, y: 220, r: 8, t: 'University' }, { x: 220, y: 40, r: 6, t: 'Ideas' },
-  { x: 40, y: 160, r: 6, t: 'Travel' }, { x: 260, y: 250, r: 6, t: 'Goals' }
-]
-const EDGES = [[0, 1], [0, 2], [0, 4], [0, 3], [1, 4], [2, 5], [0, 5], [1, 6], [3, 7], [0, 7]]
-
-function Universe() {
-  const still = useReducedMotion()
-  return (
-    <svg viewBox="0 0 400 290" className="h-auto w-full" role="img" aria-label="A network of connected memories: Python, Linux, Security, Books and more">
-      {EDGES.map(([a, b], i) => (
-        <line key={i} x1={NODES[a].x} y1={NODES[a].y} x2={NODES[b].x} y2={NODES[b].y} stroke="var(--line)" strokeWidth="1.2" />
-      ))}
-      {NODES.map((n, i) => (
-        <motion.g key={n.t} animate={still ? undefined : { y: [0, -5, 0] }}
-          transition={{ duration: 4 + i * 0.6, repeat: Infinity, ease: 'easeInOut' }}>
-          <circle cx={n.x} cy={n.y} r={n.r} fill={i === 0 ? 'var(--accent)' : 'var(--raised)'} stroke="var(--accent)" strokeWidth="1.5" />
-          <text x={n.x} y={n.y + n.r + 14} textAnchor="middle" fontSize="11" fill="var(--muted)">{n.t}</text>
-        </motion.g>
-      ))}
-    </svg>
-  )
-}
 
 const STORY = [
   ['Capture in seconds', 'Type a title, paste a link, and save. A note, an idea, a quote or a bookmark takes the same few seconds, so nothing slips away while you are busy.'],
@@ -39,8 +16,11 @@ const STORY = [
 ]
 
 export default function Landing() {
+  const { scrollYProgress } = useScroll()
+  const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 30 })
   return (
     <div>
+      <motion.div aria-hidden className="fixed inset-x-0 top-0 z-50 h-0.5 origin-left bg-accent" style={{ scaleX: bar }} />
       <a href="#" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-bg" onClick={e => { e.preventDefault(); scrollTo('story') }}>Skip to content</a>
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <span className="font-display text-2xl">MEMORA</span>
@@ -55,24 +35,29 @@ export default function Landing() {
       <main>
         <section className="mx-auto grid max-w-5xl items-center gap-10 px-5 py-14 md:grid-cols-2 md:py-24">
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 120, damping: 20 }}>
-            <h1 className="font-display text-5xl leading-[1.05] md:text-6xl">Remember everything that matters.</h1>
+            <h1 aria-label="Remember everything that matters." className="font-display text-5xl leading-[1.05] md:text-6xl" style={{ perspective: 600 }}>
+              {'Remember everything that matters.'.split(' ').map((w, i) => (
+                <motion.span key={i} aria-hidden className="mr-[0.25em] inline-block" initial={{ opacity: 0, y: 28, rotateX: -50 }} animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                  transition={{ type: 'spring', stiffness: 140, damping: 16, delay: 0.09 * i }}>{w}</motion.span>
+              ))}
+            </h1>
             <p className="mt-5 max-w-md text-lg text-muted">Your ideas, notes, links, knowledge and memories — organized in one private space.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <button className="btn-primary" onClick={() => go('#/login')}>Start for Free</button>
               <button className="btn" onClick={() => scrollTo('story')}>Explore MEMORA</button>
             </div>
           </motion.div>
-          <Universe />
+          <Hero3D />
         </section>
 
         <Preview />
 
         <section id="story" className="mx-auto max-w-3xl space-y-14 px-5 py-16">
           {STORY.map(([h, p]) => (
-            <div key={h} className="border-l-2 border-accent pl-6">
+            <motion.div key={h} className="border-l-2 border-accent pl-6" initial={{ opacity: 0, x: -18 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-80px" }} transition={{ type: "spring", stiffness: 120, damping: 20 }}>
               <h2 className="font-display text-3xl">{h}</h2>
               <p className="mt-3 max-w-xl leading-relaxed text-muted">{p}</p>
-            </div>
+            </motion.div>
           ))}
         </section>
 

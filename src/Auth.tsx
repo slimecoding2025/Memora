@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { motion } from 'motion/react'
 import { z } from 'zod'
 import { supabase } from './lib/supabase'
 
@@ -28,7 +29,7 @@ export default function Auth() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+    <motion.main initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 140, damping: 20 }} className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <h1 className="font-display text-4xl">MEMORA</h1>
       <p className="mb-8 mt-2 text-muted">Never lose an idea. Never forget what matters.</p>
       <form onSubmit={submit} className="space-y-3" noValidate>
@@ -50,6 +51,6 @@ export default function Auth() {
         <button onClick={() => setMode(mode === 'in' ? 'up' : 'in')} className="underline">{mode === 'in' ? 'Create an account' : 'Back to sign in'}</button>
         {mode === 'in' && <button onClick={() => setMode('reset')} className="underline">Forgot password?</button>}
       </div>
-    </main>
+    </motion.main>
   )
 }

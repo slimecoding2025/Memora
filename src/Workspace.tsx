@@ -164,7 +164,7 @@ export default function Workspace({ session }: { session: Session }) {
           <ul className="mt-4 space-y-3">
             <AnimatePresence initial={false}>
               {items.map(m => (
-                <motion.li key={m.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                <motion.li key={m.id} layout whileHover={{ y: -2 }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 32 }} className="rounded-lg border border-line bg-surface p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
