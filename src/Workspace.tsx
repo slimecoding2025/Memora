@@ -228,11 +228,11 @@ function Capture({ cols, onSaved }: { cols: Opt[]; onSaved: () => void }) {
         <select className="field w-auto" aria-label="Type" value={type} onChange={e => { setType(e.target.value as MemoryType); setFile(null) }}>
           {['note', 'idea', 'link', 'quote', 'image', 'document', 'voice'].map(t => <option key={t}>{t}</option>)}
         </select>
-        <input className="field min-w-0 flex-1" placeholder="Link (optional)" aria-label="Link" value={url} onChange={e => setUrl(e.target.value)} />
+        <input className="field min-w-[12rem] flex-1" placeholder="Link (optional)" aria-label="Link" value={url} onChange={e => setUrl(e.target.value)} />
         <select className="field w-auto" aria-label="Collection" value={collection} onChange={e => setCollection(e.target.value)}>
           <option value="">No collection</option>{cols.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <input className="field min-w-0 flex-1" placeholder="Tags, separated by commas" aria-label="Tags" value={tagText} onChange={e => setTagText(e.target.value)} />
+        <input className="field min-w-[12rem] flex-1" placeholder="Tags, separated by commas" aria-label="Tags" value={tagText} onChange={e => setTagText(e.target.value)} />
         <button className="btn-primary" disabled={busy}>Save memory</button>
       </div>
       {(type === 'image' || type === 'document') && (

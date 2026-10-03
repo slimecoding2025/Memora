@@ -37,7 +37,7 @@ export default function Collections() {
       <h1 className="font-display text-3xl">Collections</h1>
       <form onSubmit={create} className="mt-5 flex flex-wrap gap-2" aria-label="New collection">
         <input className="field w-48 flex-none" placeholder="Name, e.g. Cybersecurity" aria-label="Name" value={name} onChange={e => setName(e.target.value)} />
-        <input className="field min-w-0 flex-1" placeholder="Description (optional)" aria-label="Description" value={desc} onChange={e => setDesc(e.target.value)} />
+        <input className="field min-w-[12rem] flex-1" placeholder="Description (optional)" aria-label="Description" value={desc} onChange={e => setDesc(e.target.value)} />
         <button className="btn-primary">Create collection</button>
       </form>
       {err && <p role="alert" className="mt-3 text-sm text-danger">{err}</p>}
