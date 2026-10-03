@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from 'motion/react'
 import Preview from './Preview'
+import { CONTACT_EMAIL } from './config'
 
-const CONTACT_EMAIL = 'bousminaselim@gmail.com' // change to your support address
 const go = (h: string) => { location.hash = h }
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
@@ -113,7 +113,7 @@ export default function Landing() {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted">
           <span>MEMORA — Never lose an idea. Never forget what matters.</span>
-          <span>© {new Date().getFullYear()} MEMORA</span>
+          <span className="flex gap-4"><a className="underline" href="#/privacy">Privacy</a><a className="underline" href="#/terms">Terms</a><span>© {new Date().getFullYear()} MEMORA</span></span>
         </div>
       </footer>
     </div>

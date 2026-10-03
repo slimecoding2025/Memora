@@ -4,6 +4,8 @@ import { supabase } from './lib/supabase'
 import Auth from './Auth'
 import Landing from './Landing'
 import Shell from './Shell'
+import Legal from './Legal'
+import NotFound from './NotFound'
 
 function useHash() {
   const [h, setH] = useState(location.hash)
@@ -28,6 +30,8 @@ export default function App() {
   }, [])
 
   if (!ready) return <p className="p-8 text-muted">Loading…</p>
+  if (route === '/privacy' || route === '/terms') return <Legal kind={route === '/privacy' ? 'privacy' : 'terms'} />
+  if (!(route === '' || route === '/' || route === '/login' || route.startsWith('/app'))) return <NotFound />
   if (session) return <Shell session={session} page={route.startsWith('/app/') ? route.slice(5) : ''} />
   return route === '/login' ? <Auth /> : <Landing />
 }

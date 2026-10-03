@@ -40,6 +40,7 @@ export default function Auth() {
             <input className="field mt-1" type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} />
           </label>
         )}
+        {mode === 'up' && <p className="text-xs text-muted">By creating an account you agree to the <a className="underline" href="#/terms">Terms</a> and <a className="underline" href="#/privacy">Privacy Policy</a>.</p>}
         {msg && <p role="status" className={msg.ok ? 'text-sm text-accent' : 'text-sm text-danger'}>{msg.text}</p>}
         <button className="btn-primary w-full" disabled={busy}>
           {mode === 'in' ? 'Sign in' : mode === 'up' ? 'Create account' : 'Send reset link'}
